@@ -15,7 +15,11 @@ module RedmineCacheablePages
       if is_not_cacheable
         headers['Cache-Control'] = 'private, max-age=0, must-revalidate'
       else
-        cache_refresh = 2 * 60 # TODO use the correct value
+        max_age = 10
+        if defined?(::REDMINE_CACHEABLE_PAGESS_MAX_AGE_IN_MINUTES)
+          max_age = ::REDMINE_CACHEABLE_PAGESS_MAX_AGE_IN_MINUTES
+        end
+        cache_refresh = 60 * max_age
         headers['Cache-Control'] = 'public, max-age=' + cache_refresh.to_s
         headers.delete('Expires')
         headers['Vary'] = 'Accept-Language, Cookie'
