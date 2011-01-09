@@ -1,0 +1,36 @@
+<div class="wiki">
+<h2>Settings</h2>
+<p>Pages accessed from not logged users, are cacheable from web caches for <%=h(@cache_max_age_in_minutes.to_s)%> minutes, because their Cache-Control HTTP header is configured as 
+
+<pre>
+Cache-Control: public, max-age=<%= (@cache_max_age_in_minutes * 60).to_s %>, must-revalidate
+</pre>
+</p>
+
+<p>For changing this value, add a line like 
+
+<pre>
+<%=h("::REDMINE_CACHEABLE_PAGESS_MAX_AGE_IN_MINUTES = 15") %>
+</pre>
+
+inside the proper Redmine environment configuration file, and restart the Redmine server.
+</p>
+
+<h2>Updates</h2>
+
+See <a href="https://github.com/massimo-zaniboni/Redmine_cacheable_pages"">Plugin github page</a> for new versions of the plugin.</p>
+
+</div>
+
+<% content_for :sidebar do %>
+    <% if @total_hours && User.current.allowed_to?(:view_time_entries, @project) %>
+    <h3><%= l(:label_spent_time) %></h3>
+    <p><span class="icon icon-time"><%= l_hours(@total_hours) %></span></p>
+    <p><%= link_to(l(:label_details), {:controller => 'timelog', :action => 'index', :project_id => @project}) %> |
+    <%= link_to(l(:label_report), {:controller => 'time_entry_reports', :action => 'report', :project_id => @project}) %></p>
+    <% end %>
+    <%= call_hook(:view_projects_show_sidebar_bottom, :project => @project) %>
+<% end %>
+
+
+<% html_title("Cacheable Pages") -%>

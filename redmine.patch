@@ -1,0 +1,61 @@
+diff --git a/app/controllers/application_controller.rb b/app/controllers/application_controller.rb
+index 803eb5f..1603cbe 100644
+--- a/app/controllers/application_controller.rb
++++ b/app/controllers/application_controller.rb
+@@ -39,8 +39,13 @@ class ApplicationController < ActionController::Base
+   before_filter :user_setup, :check_if_login_required, :set_localization
+   filter_parameter_logging :password
+   protect_from_forgery
+-  
++
+   rescue_from ActionController::InvalidAuthenticityToken, :with => :invalid_authenticity_token
++
++  after_filter :before_sending_response_hook
++  def before_sending_response_hook
++    call_hook(:application_controller_before_sending_response, { :user => User.current, :request => request, :headers => headers, :response => response, :logger => logger })
++  end
+   
+   include Redmine::Search::Controller
+   include Redmine::MenuManager::MenuController
+diff --git a/app/views/issues/index.rhtml b/app/views/issues/index.rhtml
+index ddd5d90..6588d2f 100644
+--- a/app/views/issues/index.rhtml
++++ b/app/views/issues/index.rhtml
+@@ -37,10 +37,11 @@
+ 
+     <%= link_to_remote l(:button_apply), 
+                        { :url => { :set_filter => 1 },
++                         :method => :get,
+                          :before => 'selectAllOptions("selected_columns");',
+                          :update => "content",
+                          :complete => "apply_filters_observer()",
+-                         :with => "Form.serialize('query_form')"
++                         :with => "RedMineForm_serializeExceptAuthenticityToken('query_form')",
+                        }, :class => 'icon icon-checked' %>
+                        
+     <%= link_to_remote l(:button_clear),
+diff --git a/public/javascripts/application.js b/public/javascripts/application.js
+index 4866234..414d01a 100644
+--- a/public/javascripts/application.js
++++ b/public/javascripts/application.js
+@@ -253,3 +253,20 @@ function hideOnLoad() {
+ }
+ 
+ Event.observe(window, 'load', hideOnLoad);
++
++function RedMineForm_serializeExceptAuthenticityToken(form, options) {
++  return Form.serializeElements(RedMineForm_getElementsExceptAuthenticityCode(form), options);
++}
++
++function RedMineForm_getElementsExceptAuthenticityCode(form) {
++  return $A($(form).getElementsByTagName('*')).inject([],
++  function(elements, child) {
++    var e = child.readAttribute('name');
++    if (e == null || e.toLowerCase() != 'authenticity_token') {
++      if (Form.Element.Serializers[child.tagName.toLowerCase()])
++        elements.push(Element.extend(child));
++      }
++      return elements;
++    }
++  );
++}
